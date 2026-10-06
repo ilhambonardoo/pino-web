@@ -1,69 +1,75 @@
-import Image from "next/image";
+"use client";
+
+import { useState } from "react";
+import { Joystick } from "@/src/features/controller/components/Joystick";
+import { ExpressionGrid } from "@/src/features/expressions/components/ExpressionGrid";
+import { esphomeApi } from "@/src/services/esphomeApi";
 
 export default function Home() {
+  const [robotIp, setRobotIp] = useState<string>("192.168.1.100");
+  const [isIpSaved, setIsIpSaved] = useState<boolean>(false);
+
+  const handleEmergencyStop = async () => {
+    await esphomeApi.pressButton(robotIp, "pino_button_stop");
+  };
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
+    <main className="min-h-screen bg-slate-950 text-slate-100 p-4 sm:p-8 flex flex-col items-center">
+      {/* Header */}
+      <header className="w-full max-w-4xl flex flex-col sm:flex-row items-center justify-between gap-4 pb-6 mb-8 border-b border-slate-800">
+        <div>
+          <h1 className="text-2xl font-bold text-blue-500">
+            PINO V8 Controller
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="text-xs text-slate-400">
+            Web Dashboard Control & Expression Panel
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+
+        {/* IP Address Configuration */}
+        <div className="flex items-center gap-2 bg-slate-900 p-2 rounded-lg border border-slate-800">
+          <span className="text-xs text-slate-400 font-mono">IP:</span>
+          <input
+            type="text"
+            value={robotIp}
+            onChange={(e) => setRobotIp(e.target.value)}
+            disabled={isIpSaved}
+            placeholder="e.g. 192.168.1.100"
+            className="bg-slate-800 text-xs text-white px-2 py-1 rounded outline-none border border-slate-700 w-36 font-mono disabled:opacity-50"
+          />
+          <button
+            onClick={() => setIsIpSaved(!isIpSaved)}
+            className="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1 rounded border border-slate-700 font-medium"
           >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            {isIpSaved ? "Edit" : "Save"}
+          </button>
         </div>
-      </main>
-    </div>
+      </header>
+
+      {/* Control Panel Area */}
+      <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+        {/* Left Column: Joystick & Emergency Stop */}
+        <section className="flex flex-col items-center gap-6 bg-slate-900 p-6 rounded-xl border border-slate-800 shadow-xl">
+          <h2 className="text-sm font-semibold text-slate-300 uppercase tracking-wider">
+            Drive Control
+          </h2>
+
+          <Joystick robotIp={robotIp} size={220} />
+
+          {/* Emergency Stop Button */}
+          <button
+            onClick={handleEmergencyStop}
+            className="w-full py-3 bg-red-600 hover:bg-red-700 active:scale-98 text-white font-bold rounded-lg shadow-lg tracking-wider transition-all"
+          >
+            🚨 EMERGENCY STOP
+          </button>
+        </section>
+
+        {/* Right Column: Expression Buttons */}
+        <section className="flex justify-center">
+          <ExpressionGrid robotIp={robotIp} />
+        </section>
+      </div>
+    </main>
   );
 }
