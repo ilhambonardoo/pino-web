@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState, useCallback, useEffect } from "react";
+import React, { useRef, useState, useCallback } from "react";
 import { useRobotDrive } from "../hooks/useRobotDrive";
 import { JoystickProps } from "../lib/interface/joystick";
 
@@ -42,40 +42,30 @@ export const Joystick: React.FC<JoystickProps> = ({ robotIp, size = 200 }) => {
     [updateJoystick],
   );
 
-  const handleStart = (e: React.PointerEvent<HTMLDivElement>) => {
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     e.currentTarget.setPointerCapture(e.pointerId);
     setIsDragging(true);
     startDriveLoop();
     handleMove(e.clientX, e.clientY);
   };
 
-  const handleEnd = useCallback(() => {
-    setIsDragging(false);
-    setPosition({ x: 0, y: 0 });
-    stopDriveLoop();
-  }, [stopDriveLoop]);
-
-  useEffect(() => {
-    const onPointerMove = (e: PointerEvent) => {
-      if (isDragging) handleMove(e.clientX, e.clientY);
-    };
-
-    const onPointerUp = () => {
-      if (isDragging) handleEnd();
-    };
-
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
     if (isDragging) {
-      window.addEventListener("pointermove", onPointerMove);
-      window.addEventListener("pointerup", onPointerUp);
-      window.addEventListener("pointercancel", onPointerUp);
+      handleMove(e.clientX, e.clientY);
     }
+  };
 
-    return () => {
-      window.removeEventListener("pointermove", onPointerMove);
-      window.removeEventListener("pointerup", onPointerUp);
-      window.removeEventListener("pointercancel", onPointerUp);
-    };
-  }, [isDragging, handleMove, handleEnd]);
+  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (isDragging) {
+      if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+        e.currentTarget.releasePointerCapture(e.pointerId);
+      }
+      setIsDragging(false);
+      setPosition({ x: 0, y: 0 });
+      stopDriveLoop();
+    }
+  };
+
   return (
     <div className="flex w-full flex-col items-center gap-4 select-none">
       <div className="flex w-full items-center justify-between px-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">
@@ -92,7 +82,10 @@ export const Joystick: React.FC<JoystickProps> = ({ robotIp, size = 200 }) => {
 
       <div
         ref={containerRef}
-        onPointerDown={handleStart}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
         style={{ width: `min(${size}px, 78vw)`, aspectRatio: "1" }}
         className="group relative flex shrink-0 cursor-pointer touch-none items-center justify-center rounded-full border border-cyan-300/15 bg-[#101c2c] shadow-[0_22px_45px_-18px_rgba(0,0,0,0.9),inset_0_2px_5px_rgba(255,255,255,0.08)]"
       >
